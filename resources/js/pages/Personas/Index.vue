@@ -1,19 +1,54 @@
 <script setup>
 import { ref } from "vue";
-import { Eye, Pencil, Trash } from "lucide-vue-next";
+import { Eye, Pencil, UserX, UserCheck } from "lucide-vue-next";
 import PersonaForm from "@/components/Personas/PersonaForm.vue";
+import ConfirmationModal from "@/components/ConfirmationModal.vue";
+import { router } from "@inertiajs/vue3";
+import personasRoutes from "@/routes/personas";
 
 defineProps({
     personas: Array,
 });
 
-const mostrarModal = ref(false);
-const personaSeleccionada = ref(null);
 const mostrarFormulario = ref(false);
+const personaSeleccionada = ref(null);
+const mostrarConfirmacion = ref(false);
 
-function verPersona(persona) {
+function nuevaPersona() {
+    personaSeleccionada.value = null;
+    mostrarFormulario.value = true;
+}
+
+function editarPersona(persona) {
     personaSeleccionada.value = persona;
-    mostrarModal.value = true;
+    mostrarFormulario.value = true;
+}
+
+//MODAL DE CONFIRMACION DESACTIVAR PERSONA
+function cambiarEstadoPersona(persona) {
+    personaSeleccionada.value = persona;
+    mostrarConfirmacion.value = true;
+}
+function cancelarCambioEstado() {
+    personaSeleccionada.value = null;
+    mostrarConfirmacion.value = false;
+}
+function confirmarCambioEstado() {
+    if (!personaSeleccionada.value) {
+        return;
+    }
+
+    const persona = personaSeleccionada.value;
+
+    const ruta =
+        persona.estado === 1
+            ? personasRoutes.inactivate(persona.id_persona)
+            : personasRoutes.activate(persona.id_persona);
+
+    mostrarConfirmacion.value = false;
+    personaSeleccionada.value = null;
+
+    router.patch(ruta);
 }
 </script>
 
@@ -32,7 +67,7 @@ function verPersona(persona) {
             <button
                 type="button"
                 class="rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-500"
-                @click="mostrarFormulario = true"
+                @click="nuevaPersona"
             >
                 Nueva persona
             </button>
@@ -40,9 +75,12 @@ function verPersona(persona) {
             <!-- COMPONENTE MOSTRAR FORMULARIO -->
             <PersonaForm
                 :mostrar="mostrarFormulario"
-                @cerrar="mostrarFormulario = false"
+                :persona="personaSeleccionada"
+                @cerrar="
+                    mostrarFormulario = false;
+                    personaSeleccionada = null;
+                "
             />
-
         </div>
 
         <!-- Tabla -->
@@ -107,12 +145,13 @@ function verPersona(persona) {
 
                             <span
                                 v-else
-                                class="rounded-full px-2.5 py-1 text-xs font-medium"
+                                class="rounded-full px-2.5 py-1 text-xs font-medium bg-red-100 text-red-800"
                             >
                                 Inactivo
                             </span>
                         </td>
                         <td class="px-6 py-4">
+                            <!--
                             <button
                                 type="button"
                                 class="mr-2 rounded-full bg-blue-300 p-2 text-black hover:bg-blue-400"
@@ -121,144 +160,62 @@ function verPersona(persona) {
                             >
                                 <Eye class="h-4 w-4" />
                             </button>
+                            -->
 
                             <button
                                 type="button"
                                 class="mr-2 rounded-full bg-yellow-200 p-2 text-black hover:bg-yellow-300"
                                 tittle="Editar persona"
+                                @click="editarPersona(persona)"
                             >
                                 <Pencil class="h-4 w-4" />
                             </button>
 
                             <button
                                 type="button"
-                                class="mr-2 rounded-full bg-red-300 p-2 text-black hover:bg-red-400"
-                                tittle="Editar persona"
+                                class="mr-2 rounded-full p-2 text-black"
+                                :class="
+                                    persona.estado === 1
+                                        ? 'bg-gray-400 hover:bg-gray-300'
+                                        : 'bg-gray-300 hover:bg-gray-400'
+                                "
+                                :title="
+                                    persona.estado === 1
+                                        ? 'Desactivar persona'
+                                        : 'Reactivar persona'
+                                "
+                                @click="cambiarEstadoPersona(persona)"
                             >
-                                <Trash class="h-4 w-4" />
+                                <UserX
+                                    v-if="persona.estado === 1"
+                                    class="h-4 w-4"
+                                />
+                                <UserCheck v-else class="h-4 w-4" />
                             </button>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Modal ver persona -->
-    <div
-        v-if="mostrarModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-        @click="mostrarModal = false"
-    >
-        <div class="w-full max-w-lg rounded-lg bg-white shadow-xl" @click.stop>
-            <!-- Encabezado -->
-            <div class="flex items-center justify-between border-b px-6 py-4">
-                <div>
-                    <h2 class="text-lg font-semibold">
-                        {{ personaSeleccionada?.nombres }}
-                        {{ personaSeleccionada?.apellido_paterno }}
-                        {{ personaSeleccionada?.apellido_materno }}
-                        {{ personaSeleccionada?.apellido_casado }}
-                    </h2>
-                    <p class="text-sm text-gray-500">Información personal</p>
-                </div>
-
-                <button
-                    type="button"
-                    class="rounded-md p-2 text-gray-500 hover:bg-gray-100"
-                    title="Cerrar"
-                    @click="mostrarModal = false"
-                >
-                    ✕
-                </button>
-            </div>
-            <!-- Contenido -->
-            <div
-                v-if="personaSeleccionada"
-                class="grid grid-cols-2 gap-4 px-6 py-5"
-            >
-                <div>
-                    <p class="text-xs font-medium text-gray-500">Carnet</p>
-                    <p class="mt-1 text-sm">{{ personaSeleccionada.carnet }}</p>
-                </div>
-
-                <div>
-                    <p class="text-xs font-medium text-gray-500">Nombres</p>
-                    <p class="mt-1 text-sm">
-                        {{ personaSeleccionada.nombres }}
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-xs font-medium text-gray-500">
-                        Apellido paterno
-                    </p>
-                    <p class="mt-1 text-sm">
-                        {{ personaSeleccionada.apellido_paterno ?? "—" }}
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-xs font-medium text-gray-500">
-                        Apellido materno
-                    </p>
-                    <p class="mt-1 text-sm">
-                        {{ personaSeleccionada.apellido_materno ?? "—" }}
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-xs font-medium text-gray-500">Género</p>
-                    <p class="mt-1 text-sm">
-                        {{ personaSeleccionada.genero ?? "—" }}
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-xs font-medium text-gray-500">
-                        Fecha de nacimiento
-                    </p>
-                    <p class="mt-1 text-sm">
-                        {{ personaSeleccionada.fecha_nacimiento ?? "—" }}
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-xs font-medium text-gray-500">
-                        Estado civil
-                    </p>
-                    <p class="mt-1 text-sm">
-                        {{ personaSeleccionada.estado_civil ?? "—" }}
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-xs font-medium text-gray-500">Celular</p>
-                    <p class="mt-1 text-sm">
-                        {{ personaSeleccionada.celular ?? "—" }}
-                    </p>
-                </div>
-
-                <div class="col-span-2">
-                    <p class="text-xs font-medium text-gray-500">
-                        Correo electrónico
-                    </p>
-                    <p class="mt-1 text-sm">
-                        {{ personaSeleccionada.email ?? "—" }}
-                    </p>
-                </div>
-            </div>
-
-            <!-- Pie -->
-            <div class="flex justify-end border-t px-6 py-4">
-                <button
-                    type="button"
-                    class="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
-                    @click="mostrarModal = false"
-                >
-                    Cerrar
-                </button>
-            </div>
-        </div>
+        <!-- Modal de confirmación de eliminación -->
+        <ConfirmationModal
+            :mostrar="mostrarConfirmacion"
+            :titulo="
+                personaSeleccionada?.estado === 1
+                    ? '¿Desactivar persona?'
+                    : '¿Reactivar persona?'
+            "
+            :mensaje="
+                personaSeleccionada?.estado === 1
+                    ? `¿Está seguro de desactivar a ${personaSeleccionada?.nombres} ${personaSeleccionada?.apellido_paterno}?`
+                    : `¿Está seguro de reactivar a ${personaSeleccionada?.nombres} ${personaSeleccionada?.apellido_paterno}?`
+            "
+            :texto-confirmar="
+                personaSeleccionada?.estado === 1 ? 'Desactivar' : 'Reactivar'
+            "
+            @cancelar="cancelarCambioEstado"
+            @confirmar="confirmarCambioEstado"
+        />
     </div>
 </template>

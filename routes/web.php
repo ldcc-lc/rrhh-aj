@@ -13,6 +13,11 @@ Route::post('/personas', [PersonaController::class, 'store'])
     ->name('personas.store');
 Route::put('/personas/{persona}', [PersonaController::class, 'update'])
     ->name('personas.update');
+Route::patch('/personas/{persona}/inactivate', [PersonaController::class, 'inactivate'])
+    ->name('personas.inactivate');
+Route::patch('/personas/{persona}/activate', [PersonaController::class, 'activate'])
+    ->name('personas.activate');
+
 
 
 Route::middleware(['auth', 'verified'])->group(function () {

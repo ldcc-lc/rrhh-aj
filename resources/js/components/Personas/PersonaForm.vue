@@ -1,13 +1,37 @@
 <script setup>
 import { useForm } from "@inertiajs/vue3";
+import {watch} from "vue";
 import personas from "@/routes/personas";
 
-defineProps({
+const props = defineProps({
     mostrar: Boolean,
-});
+    persona:{
+        type: Object,
+        default:null,
+    }
+})
+
+watch(
+    () => props.persona,
+    (persona) => {
+        if (persona) {
+            form.carnet = persona.carnet ?? "";
+            form.complementario = persona.complementario ?? "";
+            form.nombres = persona.nombres ?? "";
+            form.apellido_paterno = persona.apellido_paterno ?? "";
+            form.apellido_materno = persona.apellido_materno ?? "";
+            form.apellido_casado = persona.apellido_casado ?? "";
+            form.celular = persona.celular ?? "";
+            form.genero = persona.genero ?? "";
+            form.fecha_nacimiento = persona.fecha_nacimiento ?? "";
+            form.estado_civil = persona.estado_civil ?? "";
+            form.email = persona.email ?? "";
+        }
+    },
+    { immediate: true }
+);
 
 const emit = defineEmits(["cerrar"]);
-
 const form = useForm({
     carnet: "",
     complementario: "",
@@ -23,6 +47,17 @@ const form = useForm({
 });
 
 function guardar() {
+    if (props.persona) {
+    form.put(personas.update(props.persona.id_persona), {
+        onSuccess: () => {
+            emit("cerrar");
+            form.reset();
+            form.clearErrors();
+        },
+    });
+
+    return;
+    }
     form.post(personas.store(), {
         onSuccess: () => {
             emit("cerrar");
@@ -50,7 +85,7 @@ function cerrarFormulario() {
             <!-- Encabezado -->
             <div class="flex items-center justify-between border-b px-6 py-4">
                 <div>
-                    <h2 class="text-lg font-semibold">Nueva persona</h2>
+                    <h2 class="text-lg font-semibold">{{ persona ? "Editar persona" : "Nueva persona" }}</h2>
 
                     <p class="text-sm text-gray-500">
                         Registrar información personal
@@ -139,52 +174,56 @@ function cerrarFormulario() {
                         </p>
                     </div>
 
-                    <!-- Apellido paterno -->
-                    <div>
-                        <label
-                            for="apellido_paterno"
-                            class="text-sm font-medium text-gray-700"
-                        >
-                            Apellido paterno
-                        </label>
+                    <!-- Apellidos -->
+                    <div class="col-span-2 grid grid-cols-2 gap-4">
+                        <!-- Apellido paterno -->
+                        <div>
+                            <label
+                                for="apellido_paterno"
+                                class="text-sm font-medium text-gray-700"
+                            >
+                                Apellido paterno
+                            </label>
 
-                        <input
-                            id="apellido_paterno"
-                            type="text"
-                            v-model="form.apellido_paterno"
-                            class="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-                        />
+                            <input
+                                id="apellido_paterno"
+                                type="text"
+                                v-model="form.apellido_paterno"
+                                class="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                            />
+                        </div>
+
+                        <!-- Apellido materno -->
+                        <div>
+                            <label
+                                for="apellido_materno"
+                                class="text-sm font-medium text-gray-700"
+                            >
+                                Apellido materno
+                            </label>
+
+                            <input
+                                id="apellido_materno"
+                                type="text"
+                                v-model="form.apellido_materno"
+                                class="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                            />
+                        </div>
+
+                        <!-- Error de apellidos -->
                         <p
-                            v-if="form.errors.apellido_paterno"
-                            class="mt-1 text-sm text-red-600"
+                            v-if="
+                                form.errors.apellido_paterno ||
+                                form.errors.apellido_materno
+                            "
+                            class="col-span-2 text-sm text-red-600"
                         >
-                            {{ form.errors.apellido_paterno }}
+                            {{
+                                form.errors.apellido_paterno ??
+                                form.errors.apellido_materno
+                            }}
                         </p>
                     </div>
-
-                    <!-- Apellido materno -->
-                    <div>
-                        <label
-                            for="apellido_materno"
-                            class="text-sm font-medium text-gray-700"
-                        >
-                            Apellido materno
-                        </label>
-
-                        <input
-                            id="apellido_materno"
-                            type="text"
-                            v-model="form.apellido_materno"
-                            class="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-                        />
-                        <p
-                            v-if="form.errors.apellido_materno"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.apellido_materno }}
-                        </p>
-                    </div>
-
                     <!-- Apellido de casado -->
                     <div>
                         <label
@@ -207,7 +246,6 @@ function cerrarFormulario() {
                             {{ form.errors.apellido_casado }}
                         </p>
                     </div>
-
                     <!-- Celular -->
                     <div>
                         <label
@@ -344,7 +382,7 @@ function cerrarFormulario() {
                         type="submit"
                         class="rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
                     >
-                        Guardar
+                        {{ persona ? "Actualizar" : "Guardar" }}
                     </button>
                 </div>
             </form>

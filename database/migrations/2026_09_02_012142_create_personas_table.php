@@ -28,7 +28,7 @@ return new class extends Migration
             $table->integer('estado')->default(1);
             $table->timestamp('fecha_creacion')->useCurrent();
             $table->timestamp('fecha_actualizacion')->nullable();
-
+            $table->timestamp('fecha_eliminacion')->nullable();
             //restricciones
             $table->unique(['carnet', 'complementario'],'uk_persona_carnet_complementario');
         });
