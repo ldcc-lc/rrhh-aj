@@ -25,7 +25,7 @@ return new class extends Migration
             $table->date('fecha_nacimiento');
             $table->string('estado_civil', 20)->nullable();
             $table->string('email', 100)->nullable();
-            $table->integer('estado')->default(1);
+            $table->tinyInteger('estado')->default(1);
             $table->timestamp('fecha_creacion')->useCurrent();
             $table->timestamp('fecha_actualizacion')->nullable();
             $table->timestamp('fecha_eliminacion')->nullable();
